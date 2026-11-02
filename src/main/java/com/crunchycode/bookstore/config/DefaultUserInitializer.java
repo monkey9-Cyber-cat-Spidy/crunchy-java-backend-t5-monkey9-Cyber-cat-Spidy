@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,19 +23,37 @@ public class DefaultUserInitializer implements ApplicationRunner {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
-    public DefaultUserInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public DefaultUserInitializer(UserRepository userRepository,
+                                  PasswordEncoder passwordEncoder,
+                                  JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        ensureUser("admin", "admin@crunchycode.com", "admin123", Role.ROLE_ADMIN);
-        ensureUser("user", "user@crunchycode.com", "user123", Role.ROLE_USER);
-        ensureUser("regular_user", "regular_user@crunchycode.com", "user123", Role.ROLE_USER);
-        log.info("Default user accounts verified and initialized successfully.");
+        try {
+            syncSequenceIfPostgres();
+            ensureUser("admin", "admin@crunchycode.com", "admin123", Role.ROLE_ADMIN);
+            ensureUser("user", "user@crunchycode.com", "user123", Role.ROLE_USER);
+            ensureUser("regular_user", "regular_user@crunchycode.com", "user123", Role.ROLE_USER);
+            log.info("Default user accounts verified and initialized successfully.");
+        } catch (Exception e) {
+            log.warn("Non-fatal: could not completely initialize default users: {}", e.getMessage());
+        }
+    }
+
+    private void syncSequenceIfPostgres() {
+        try {
+            jdbcTemplate.execute("SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE(MAX(id), 1)) FROM users");
+            log.info("Synchronized PostgreSQL users_id_seq sequence to max(id).");
+        } catch (Exception e) {
+            // Non-Postgres databases (H2, MySQL) do not use pg_get_serial_sequence; safe to ignore
+        }
     }
 
     private void ensureUser(String username, String email, String rawPassword, Role role) {
@@ -46,7 +65,6 @@ public class DefaultUserInitializer implements ApplicationRunner {
                     log.info("Synchronized credentials for user: {}", username);
                 },
                 () -> {
-                    // Avoid email collision if email already exists under different username
                     String finalEmail = userRepository.existsByEmail(email) 
                             ? username + "@crunchycode.internal" 
                             : email;
