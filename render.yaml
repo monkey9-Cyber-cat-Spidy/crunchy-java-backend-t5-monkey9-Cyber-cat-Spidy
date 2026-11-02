@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: crunchy-bookstore-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    plan: free
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"

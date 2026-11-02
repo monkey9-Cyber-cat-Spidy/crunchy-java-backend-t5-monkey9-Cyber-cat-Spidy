@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DataSourceConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.config</a> &gt; <span class="el_source">DataSourceConfig.java</span></div><h1>DataSourceConfig.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.config;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
+
+import javax.sql.DataSource;
+import java.net.URI;
+
+/**
+ * Production and Development DataSource Configuration.
+ * Automatically resolves and adapts Cloud PaaS database URIs (Render PostgreSQL / Railway MySQL)
+ * into standard JDBC connection strings while preserving local development configuration.
+ */
+@Configuration
+@Profile(&quot;!test&quot;)
+<span class="nc" id="L23">public class DataSourceConfig {</span>
+
+<span class="nc" id="L25">    private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);</span>
+
+    @Bean
+    @Primary
+    public DataSource dataSource(Environment env) {
+<span class="nc" id="L30">        String rawUrl = env.getProperty(&quot;DATABASE_URL&quot;);</span>
+<span class="nc bnc" id="L31" title="All 4 branches missed.">        if (rawUrl == null || rawUrl.isBlank()) {</span>
+<span class="nc" id="L32">            rawUrl = env.getProperty(&quot;MYSQL_URL&quot;);</span>
+        }
+
+<span class="nc" id="L35">        HikariConfig config = new HikariConfig();</span>
+
+<span class="nc bnc" id="L37" title="All 4 branches missed.">        if (rawUrl != null &amp;&amp; !rawUrl.isBlank()) {</span>
+<span class="nc bnc" id="L38" title="All 4 branches missed.">            if (rawUrl.startsWith(&quot;postgres://&quot;) || rawUrl.startsWith(&quot;postgresql://&quot;)) {</span>
+<span class="nc" id="L39">                log.info(&quot;Detected Cloud PostgreSQL URL (Render). Parsing connection parameters...&quot;);</span>
+                try {
+<span class="nc" id="L41">                    URI uri = new URI(rawUrl);</span>
+<span class="nc" id="L42">                    String userInfo = uri.getUserInfo();</span>
+<span class="nc" id="L43">                    String username = &quot;&quot;;</span>
+<span class="nc" id="L44">                    String password = &quot;&quot;;</span>
+<span class="nc bnc" id="L45" title="All 4 branches missed.">                    if (userInfo != null &amp;&amp; userInfo.contains(&quot;:&quot;)) {</span>
+<span class="nc" id="L46">                        String[] parts = userInfo.split(&quot;:&quot;, 2);</span>
+<span class="nc" id="L47">                        username = parts[0];</span>
+<span class="nc" id="L48">                        password = parts[1];</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">                    } else if (userInfo != null) {</span>
+<span class="nc" id="L50">                        username = userInfo;</span>
+                    }
+
+<span class="nc" id="L53">                    String host = uri.getHost();</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">                    int port = uri.getPort() != -1 ? uri.getPort() : 5432;</span>
+<span class="nc" id="L55">                    String path = uri.getPath();</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">                    String database = (path != null &amp;&amp; path.length() &gt; 1) ? path.substring(1) : &quot;crunchy_bookstore&quot;;</span>
+
+<span class="nc" id="L58">                    String jdbcUrl = &quot;jdbc:postgresql://&quot; + host + &quot;:&quot; + port + &quot;/&quot; + database + &quot;?sslmode=require&quot;;</span>
+<span class="nc" id="L59">                    config.setJdbcUrl(jdbcUrl);</span>
+<span class="nc" id="L60">                    config.setUsername(username);</span>
+<span class="nc" id="L61">                    config.setPassword(password);</span>
+<span class="nc" id="L62">                    config.setDriverClassName(&quot;org.postgresql.Driver&quot;);</span>
+<span class="nc" id="L63">                    log.info(&quot;Successfully configured Cloud PostgreSQL connection to host: {}, port: {}, database: {}&quot;, host, port, database);</span>
+<span class="nc" id="L64">                } catch (Exception e) {</span>
+<span class="nc" id="L65">                    log.warn(&quot;Failed to parse cloud PostgreSQL URL. Falling back to properties: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L66">                    fallbackToProperties(config, env);</span>
+<span class="nc" id="L67">                }</span>
+<span class="nc bnc" id="L68" title="All 4 branches missed.">            } else if (rawUrl.startsWith(&quot;mysql://&quot;) || rawUrl.startsWith(&quot;mysql2://&quot;)) {</span>
+<span class="nc" id="L69">                log.info(&quot;Detected Cloud MySQL URL. Parsing connection parameters...&quot;);</span>
+                try {
+<span class="nc" id="L71">                    URI uri = new URI(rawUrl);</span>
+<span class="nc" id="L72">                    String userInfo = uri.getUserInfo();</span>
+<span class="nc" id="L73">                    String username = &quot;&quot;;</span>
+<span class="nc" id="L74">                    String password = &quot;&quot;;</span>
+<span class="nc bnc" id="L75" title="All 4 branches missed.">                    if (userInfo != null &amp;&amp; userInfo.contains(&quot;:&quot;)) {</span>
+<span class="nc" id="L76">                        String[] parts = userInfo.split(&quot;:&quot;, 2);</span>
+<span class="nc" id="L77">                        username = parts[0];</span>
+<span class="nc" id="L78">                        password = parts[1];</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">                    } else if (userInfo != null) {</span>
+<span class="nc" id="L80">                        username = userInfo;</span>
+                    }
+
+<span class="nc" id="L83">                    String host = uri.getHost();</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                    int port = uri.getPort() != -1 ? uri.getPort() : 3306;</span>
+<span class="nc" id="L85">                    String path = uri.getPath();</span>
+<span class="nc bnc" id="L86" title="All 4 branches missed.">                    String database = (path != null &amp;&amp; path.length() &gt; 1) ? path.substring(1) : &quot;crunchy_bookstore&quot;;</span>
+
+<span class="nc" id="L88">                    String jdbcUrl = &quot;jdbc:mysql://&quot; + host + &quot;:&quot; + port + &quot;/&quot; + database + &quot;?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC&quot;;</span>
+<span class="nc" id="L89">                    config.setJdbcUrl(jdbcUrl);</span>
+<span class="nc" id="L90">                    config.setUsername(username);</span>
+<span class="nc" id="L91">                    config.setPassword(password);</span>
+<span class="nc" id="L92">                    config.setDriverClassName(&quot;com.mysql.cj.jdbc.Driver&quot;);</span>
+<span class="nc" id="L93">                    log.info(&quot;Successfully configured Cloud MySQL connection to host: {}, port: {}, database: {}&quot;, host, port, database);</span>
+<span class="nc" id="L94">                } catch (Exception e) {</span>
+<span class="nc" id="L95">                    log.warn(&quot;Failed to parse cloud database URL. Falling back to application properties: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L96">                    fallbackToProperties(config, env);</span>
+<span class="nc" id="L97">                }</span>
+            } else {
+<span class="nc" id="L99">                fallbackToProperties(config, env);</span>
+            }
+        } else {
+<span class="nc" id="L102">            fallbackToProperties(config, env);</span>
+        }
+
+<span class="nc" id="L105">        config.setMaximumPoolSize(10);</span>
+<span class="nc" id="L106">        config.setMinimumIdle(2);</span>
+<span class="nc" id="L107">        config.setIdleTimeout(30000);</span>
+<span class="nc" id="L108">        config.setConnectionTimeout(20000);</span>
+<span class="nc" id="L109">        config.setMaxLifetime(1800000);</span>
+
+<span class="nc" id="L111">        return new HikariDataSource(config);</span>
+    }
+
+    private void fallbackToProperties(HikariConfig config, Environment env) {
+<span class="nc" id="L115">        String jdbcUrl = env.getProperty(&quot;spring.datasource.url&quot;, &quot;jdbc:mysql://localhost:3306/crunchy_bookstore?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;serverTimezone=UTC&quot;);</span>
+<span class="nc" id="L116">        String username = env.getProperty(&quot;spring.datasource.username&quot;, &quot;root&quot;);</span>
+<span class="nc" id="L117">        String password = env.getProperty(&quot;spring.datasource.password&quot;, &quot;&quot;);</span>
+<span class="nc" id="L118">        String driver = env.getProperty(&quot;spring.datasource.driver-class-name&quot;, &quot;com.mysql.cj.jdbc.Driver&quot;);</span>
+
+<span class="nc" id="L120">        config.setJdbcUrl(jdbcUrl);</span>
+<span class="nc" id="L121">        config.setUsername(username);</span>
+<span class="nc" id="L122">        config.setPassword(password);</span>
+<span class="nc" id="L123">        config.setDriverClassName(driver);</span>
+<span class="nc" id="L124">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

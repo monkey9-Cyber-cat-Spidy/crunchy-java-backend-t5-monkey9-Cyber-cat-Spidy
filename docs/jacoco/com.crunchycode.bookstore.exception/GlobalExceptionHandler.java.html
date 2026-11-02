@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.exception</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.exception;
+
+import com.crunchycode.bookstore.dto.ApiErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Global Exception Handler ensuring no stack trace or internal leakage reaches any client.
+ * Translates domain, security, and validation exceptions into standard ApiErrorResponse structures.
+ */
+@RestControllerAdvice
+<span class="fc" id="L22">public class GlobalExceptionHandler {</span>
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+<span class="fc" id="L26">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="fc" id="L27">                HttpStatus.NOT_FOUND.value(),</span>
+                &quot;Not Found&quot;,
+<span class="fc" id="L29">                ex.getMessage(),</span>
+<span class="fc" id="L30">                request.getRequestURI()</span>
+        );
+<span class="fc" id="L32">        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);</span>
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleDuplicate(DuplicateResourceException ex, HttpServletRequest request) {
+<span class="fc" id="L37">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="fc" id="L38">                HttpStatus.CONFLICT.value(),</span>
+                &quot;Conflict&quot;,
+<span class="fc" id="L40">                ex.getMessage(),</span>
+<span class="fc" id="L41">                request.getRequestURI()</span>
+        );
+<span class="fc" id="L43">        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);</span>
+    }
+
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleBusinessRule(BusinessRuleException ex, HttpServletRequest request) {
+<span class="nc" id="L48">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="nc" id="L49">                HttpStatus.BAD_REQUEST.value(),</span>
+                &quot;Bad Request&quot;,
+<span class="nc" id="L51">                ex.getMessage(),</span>
+<span class="nc" id="L52">                request.getRequestURI()</span>
+        );
+<span class="nc" id="L54">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleValidationErrors(MethodArgumentNotValidException ex, HttpServletRequest request) {
+<span class="fc" id="L59">        Map&lt;String, String&gt; fieldErrors = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        for (FieldError error : ex.getBindingResult().getFieldErrors()) {</span>
+<span class="fc" id="L61">            fieldErrors.put(error.getField(), error.getDefaultMessage());</span>
+<span class="fc" id="L62">        }</span>
+
+<span class="fc" id="L64">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="fc" id="L65">                HttpStatus.BAD_REQUEST.value(),</span>
+                &quot;Bad Request&quot;,
+                &quot;Validation failed for one or more fields&quot;,
+<span class="fc" id="L68">                request.getRequestURI(),</span>
+                fieldErrors
+        );
+<span class="fc" id="L71">        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);</span>
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+<span class="nc" id="L76">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="nc" id="L77">                HttpStatus.UNAUTHORIZED.value(),</span>
+                &quot;Unauthorized&quot;,
+<span class="nc bnc" id="L79" title="All 2 branches missed.">                ex.getMessage() != null ? ex.getMessage() : &quot;Authentication failed&quot;,</span>
+<span class="nc" id="L80">                request.getRequestURI()</span>
+        );
+<span class="nc" id="L82">        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);</span>
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+<span class="fc" id="L87">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="fc" id="L88">                HttpStatus.FORBIDDEN.value(),</span>
+                &quot;Forbidden&quot;,
+                &quot;Access is denied: insufficient role or privileges&quot;,
+<span class="fc" id="L91">                request.getRequestURI()</span>
+        );
+<span class="fc" id="L93">        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity&lt;ApiErrorResponse&gt; handleGenericException(Exception ex, HttpServletRequest request) {
+        // Crucial requirement: No raw stack trace reaches the client
+<span class="nc" id="L99">        ApiErrorResponse error = new ApiErrorResponse(</span>
+<span class="nc" id="L100">                HttpStatus.INTERNAL_SERVER_ERROR.value(),</span>
+                &quot;Internal Server Error&quot;,
+                &quot;An unexpected server error occurred. Please contact system administrator.&quot;,
+<span class="nc" id="L103">                request.getRequestURI()</span>
+        );
+<span class="nc" id="L105">        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

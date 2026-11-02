@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.service</a> &gt; <span class="el_source">BookService.java</span></div><h1>BookService.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.service;
+
+import com.crunchycode.bookstore.dto.*;
+import com.crunchycode.bookstore.exception.DuplicateResourceException;
+import com.crunchycode.bookstore.exception.ResourceNotFoundException;
+import com.crunchycode.bookstore.model.Author;
+import com.crunchycode.bookstore.model.Book;
+import com.crunchycode.bookstore.model.Category;
+import com.crunchycode.bookstore.repository.AuthorRepository;
+import com.crunchycode.bookstore.repository.BookRepository;
+import com.crunchycode.bookstore.repository.CategoryRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+public class BookService {
+
+    private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
+    private final CategoryRepository categoryRepository;
+
+    public BookService(BookRepository bookRepository,
+                       AuthorRepository authorRepository,
+<span class="fc" id="L32">                       CategoryRepository categoryRepository) {</span>
+<span class="fc" id="L33">        this.bookRepository = Objects.requireNonNull(bookRepository);</span>
+<span class="fc" id="L34">        this.authorRepository = Objects.requireNonNull(authorRepository);</span>
+<span class="fc" id="L35">        this.categoryRepository = Objects.requireNonNull(categoryRepository);</span>
+<span class="fc" id="L36">    }</span>
+
+    @Transactional(readOnly = true)
+    public PageResponse&lt;BookResponse&gt; getAllBooks(Pageable pageable) {
+<span class="fc" id="L40">        Page&lt;Book&gt; page = bookRepository.findAllWithAssociations(pageable);</span>
+<span class="fc" id="L41">        List&lt;BookResponse&gt; dtos = page.getContent().stream()</span>
+<span class="fc" id="L42">                .map(this::mapToResponse)</span>
+<span class="fc" id="L43">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L45">        return toPageResponse(page, dtos);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse&lt;BookResponse&gt; getBooksByAuthor(Long authorId, Pageable pageable) {
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (!authorRepository.existsById(authorId)) {</span>
+<span class="nc" id="L51">            throw new ResourceNotFoundException(&quot;Author not found with id: &quot; + authorId);</span>
+        }
+<span class="nc" id="L53">        Page&lt;Book&gt; page = bookRepository.findByAuthorId(authorId, pageable);</span>
+<span class="nc" id="L54">        List&lt;BookResponse&gt; dtos = page.getContent().stream()</span>
+<span class="nc" id="L55">                .map(this::mapToResponse)</span>
+<span class="nc" id="L56">                .collect(Collectors.toList());</span>
+
+<span class="nc" id="L58">        return toPageResponse(page, dtos);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public BookResponse getBookById(Long id) {
+<span class="fc" id="L63">        Book book = bookRepository.findWithAssociationsById(id)</span>
+<span class="fc" id="L64">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Book not found with id: &quot; + id));</span>
+<span class="fc" id="L65">        return mapToResponse(book);</span>
+    }
+
+    @Transactional
+    public BookResponse createBook(BookCreateRequest request) {
+<span class="fc" id="L70">        Author author = authorRepository.findById(request.authorId())</span>
+<span class="fc" id="L71">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Author not found with id: &quot; + request.authorId()));</span>
+
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (bookRepository.existsByIsbn(request.isbn())) {</span>
+<span class="fc" id="L74">            throw new DuplicateResourceException(&quot;Book already exists with ISBN: &quot; + request.isbn());</span>
+        }
+
+<span class="fc" id="L77">        Book book = new Book();</span>
+<span class="fc" id="L78">        book.setTitle(request.title().trim());</span>
+<span class="fc" id="L79">        book.setIsbn(request.isbn().trim().toUpperCase());</span>
+<span class="fc" id="L80">        book.setPrice(request.price());</span>
+<span class="fc" id="L81">        book.setPublicationYear(request.publicationYear());</span>
+<span class="fc" id="L82">        book.setAuthor(author);</span>
+
+<span class="pc bpc" id="L84" title="1 of 4 branches missed.">        if (request.categoryIds() != null &amp;&amp; !request.categoryIds().isEmpty()) {</span>
+<span class="fc" id="L85">            Set&lt;Category&gt; categories = new HashSet&lt;&gt;(categoryRepository.findAllById(request.categoryIds()));</span>
+<span class="fc" id="L86">            book.setCategories(categories);</span>
+        }
+
+<span class="fc" id="L89">        Book saved = bookRepository.save(book);</span>
+<span class="fc" id="L90">        return mapToResponse(saved);</span>
+    }
+
+    @Transactional
+    public BookResponse updateBook(Long id, BookUpdateRequest request) {
+<span class="nc" id="L95">        Book existing = bookRepository.findById(id)</span>
+<span class="nc" id="L96">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Book not found with id: &quot; + id));</span>
+
+<span class="nc" id="L98">        Author author = authorRepository.findById(request.authorId())</span>
+<span class="nc" id="L99">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Author not found with id: &quot; + request.authorId()));</span>
+
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (!existing.getIsbn().equalsIgnoreCase(request.isbn())</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">                &amp;&amp; bookRepository.existsByIsbn(request.isbn())) {</span>
+<span class="nc" id="L103">            throw new DuplicateResourceException(&quot;Book already exists with ISBN: &quot; + request.isbn());</span>
+        }
+
+<span class="nc" id="L106">        existing.setTitle(request.title().trim());</span>
+<span class="nc" id="L107">        existing.setIsbn(request.isbn().trim().toUpperCase());</span>
+<span class="nc" id="L108">        existing.setPrice(request.price());</span>
+<span class="nc" id="L109">        existing.setPublicationYear(request.publicationYear());</span>
+<span class="nc" id="L110">        existing.setAuthor(author);</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (request.categoryIds() != null) {</span>
+<span class="nc" id="L113">            Set&lt;Category&gt; categories = new HashSet&lt;&gt;(categoryRepository.findAllById(request.categoryIds()));</span>
+<span class="nc" id="L114">            existing.setCategories(categories);</span>
+        }
+
+<span class="nc" id="L117">        Book saved = bookRepository.save(existing);</span>
+<span class="nc" id="L118">        return mapToResponse(saved);</span>
+    }
+
+    @Transactional
+    public void deleteBook(Long id) {
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        if (!bookRepository.existsById(id)) {</span>
+<span class="nc" id="L124">            throw new ResourceNotFoundException(&quot;Book not found with id: &quot; + id);</span>
+        }
+<span class="fc" id="L126">        bookRepository.deleteById(id);</span>
+<span class="fc" id="L127">    }</span>
+
+    private BookResponse mapToResponse(Book book) {
+<span class="fc" id="L130">        List&lt;String&gt; catNames = book.getCategories().stream()</span>
+<span class="fc" id="L131">                .map(Category::getName)</span>
+<span class="fc" id="L132">                .sorted()</span>
+<span class="fc" id="L133">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L135">        return new BookResponse(</span>
+<span class="fc" id="L136">                book.getId(),</span>
+<span class="fc" id="L137">                book.getTitle(),</span>
+<span class="fc" id="L138">                book.getIsbn(),</span>
+<span class="fc" id="L139">                book.getPrice(),</span>
+<span class="fc" id="L140">                book.getPublicationYear(),</span>
+<span class="fc" id="L141">                book.getAuthor().getId(),</span>
+<span class="fc" id="L142">                book.getAuthor().getName(),</span>
+                catNames
+        );
+    }
+
+    private &lt;T&gt; PageResponse&lt;T&gt; toPageResponse(Page&lt;?&gt; page, List&lt;T&gt; dtos) {
+<span class="fc" id="L148">        return new PageResponse&lt;&gt;(</span>
+                dtos,
+<span class="fc" id="L150">                page.getNumber(),</span>
+<span class="fc" id="L151">                page.getSize(),</span>
+<span class="fc" id="L152">                page.getTotalElements(),</span>
+<span class="fc" id="L153">                page.getTotalPages(),</span>
+<span class="fc" id="L154">                page.isLast()</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

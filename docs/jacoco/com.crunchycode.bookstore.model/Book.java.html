@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Book.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.model</a> &gt; <span class="el_source">Book.java</span></div><h1>Book.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.model;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+@Entity
+@Table(name = &quot;books&quot;)
+public class Book {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(nullable = false, unique = true, length = 20)
+    private String isbn;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = &quot;publication_year&quot;, nullable = false)
+    private Integer publicationYear;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = &quot;author_id&quot;, nullable = false)
+    private Author author;
+
+<span class="fc" id="L33">    @ManyToMany(fetch = FetchType.LAZY)</span>
+    @JoinTable(
+            name = &quot;book_categories&quot;,
+            joinColumns = @JoinColumn(name = &quot;book_id&quot;),
+            inverseJoinColumns = @JoinColumn(name = &quot;category_id&quot;)
+    )
+    private Set&lt;Category&gt; categories = new HashSet&lt;&gt;();
+
+<span class="fc" id="L41">    public Book() {</span>
+<span class="fc" id="L42">    }</span>
+
+<span class="fc" id="L44">    public Book(Long id, String title, String isbn, BigDecimal price, Integer publicationYear, Author author) {</span>
+<span class="fc" id="L45">        this.id = id;</span>
+<span class="fc" id="L46">        this.title = title;</span>
+<span class="fc" id="L47">        this.isbn = isbn;</span>
+<span class="fc" id="L48">        this.price = price;</span>
+<span class="fc" id="L49">        this.publicationYear = publicationYear;</span>
+<span class="fc" id="L50">        this.author = author;</span>
+<span class="fc" id="L51">    }</span>
+
+    public void addCategory(Category category) {
+<span class="fc" id="L54">        categories.add(category);</span>
+<span class="fc" id="L55">        category.getBooks().add(this);</span>
+<span class="fc" id="L56">    }</span>
+
+    public void removeCategory(Category category) {
+<span class="nc" id="L59">        categories.remove(category);</span>
+<span class="nc" id="L60">        category.getBooks().remove(this);</span>
+<span class="nc" id="L61">    }</span>
+
+    public Long getId() {
+<span class="fc" id="L64">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="fc" id="L68">        this.id = id;</span>
+<span class="fc" id="L69">    }</span>
+
+    public String getTitle() {
+<span class="fc" id="L72">        return title;</span>
+    }
+
+    public void setTitle(String title) {
+<span class="fc" id="L76">        this.title = title;</span>
+<span class="fc" id="L77">    }</span>
+
+    public String getIsbn() {
+<span class="fc" id="L80">        return isbn;</span>
+    }
+
+    public void setIsbn(String isbn) {
+<span class="fc" id="L84">        this.isbn = isbn;</span>
+<span class="fc" id="L85">    }</span>
+
+    public BigDecimal getPrice() {
+<span class="fc" id="L88">        return price;</span>
+    }
+
+    public void setPrice(BigDecimal price) {
+<span class="fc" id="L92">        this.price = price;</span>
+<span class="fc" id="L93">    }</span>
+
+    public Integer getPublicationYear() {
+<span class="fc" id="L96">        return publicationYear;</span>
+    }
+
+    public void setPublicationYear(Integer publicationYear) {
+<span class="fc" id="L100">        this.publicationYear = publicationYear;</span>
+<span class="fc" id="L101">    }</span>
+
+    public Author getAuthor() {
+<span class="fc" id="L104">        return author;</span>
+    }
+
+    public void setAuthor(Author author) {
+<span class="fc" id="L108">        this.author = author;</span>
+<span class="fc" id="L109">    }</span>
+
+    public Set&lt;Category&gt; getCategories() {
+<span class="fc" id="L112">        return categories;</span>
+    }
+
+    public void setCategories(Set&lt;Category&gt; categories) {
+<span class="fc" id="L116">        this.categories = categories;</span>
+<span class="fc" id="L117">    }</span>
+
+    @Override
+    public boolean equals(Object o) {
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (this == o) return true;</span>
+<span class="pc bpc" id="L122" title="2 of 4 branches missed.">        if (o == null || getClass() != o.getClass()) return false;</span>
+<span class="fc" id="L123">        Book book = (Book) o;</span>
+<span class="fc" id="L124">        return Objects.equals(id, book.id);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L129">        return Objects.hash(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

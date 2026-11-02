@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Category.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.model</a> &gt; <span class="el_source">Category.java</span></div><h1>Category.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.model;
+
+import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
+@Entity
+@Table(name = &quot;categories&quot;)
+public class Category {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true, length = 50)
+    private String name;
+
+    @Column(length = 255)
+    private String description;
+
+<span class="fc" id="L22">    @ManyToMany(mappedBy = &quot;categories&quot;, fetch = FetchType.LAZY)</span>
+    private Set&lt;Book&gt; books = new HashSet&lt;&gt;();
+
+<span class="fc" id="L25">    public Category() {</span>
+<span class="fc" id="L26">    }</span>
+
+<span class="fc" id="L28">    public Category(Long id, String name, String description) {</span>
+<span class="fc" id="L29">        this.id = id;</span>
+<span class="fc" id="L30">        this.name = name;</span>
+<span class="fc" id="L31">        this.description = description;</span>
+<span class="fc" id="L32">    }</span>
+
+    public Long getId() {
+<span class="nc" id="L35">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="nc" id="L39">        this.id = id;</span>
+<span class="nc" id="L40">    }</span>
+
+    public String getName() {
+<span class="fc" id="L43">        return name;</span>
+    }
+
+    public void setName(String name) {
+<span class="nc" id="L47">        this.name = name;</span>
+<span class="nc" id="L48">    }</span>
+
+    public String getDescription() {
+<span class="nc" id="L51">        return description;</span>
+    }
+
+    public void setDescription(String description) {
+<span class="nc" id="L55">        this.description = description;</span>
+<span class="nc" id="L56">    }</span>
+
+    public Set&lt;Book&gt; getBooks() {
+<span class="fc" id="L59">        return books;</span>
+    }
+
+    public void setBooks(Set&lt;Book&gt; books) {
+<span class="nc" id="L63">        this.books = books;</span>
+<span class="nc" id="L64">    }</span>
+
+    @Override
+    public boolean equals(Object o) {
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (this == o) return true;</span>
+<span class="nc bnc" id="L69" title="All 4 branches missed.">        if (o == null || getClass() != o.getClass()) return false;</span>
+<span class="nc" id="L70">        Category category = (Category) o;</span>
+<span class="nc" id="L71">        return Objects.equals(id, category.id);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L76">        return Objects.hash(id);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

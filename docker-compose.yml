@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    image: mysql:8.0.36
+    container_name: crunchy-bookstore-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: crunchy_bookstore
+      MYSQL_USER: crunchy_user
+      MYSQL_PASSWORD: crunchy_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - crunchy-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crunchy-bookstore-api
+    restart: unless-stopped
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysqldb
+      DB_PORT: 3306
+      DB_NAME: crunchy_bookstore
+      DB_USER: crunchy_user
+      DB_PASSWORD: crunchy_password
+      JWT_SECRET: c8f9b2d3e4a5f601728394a5b6c7d8e9f0123456789abcdef0123456789abcdef
+      JWT_EXPIRATION_MS: 86400000
+    networks:
+      - crunchy-network
+
+networks:
+  crunchy-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local

@@ -1,0 +1,37 @@
+name: CI / Build and Test Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Build, Verify and JaCoCo Coverage Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build and Run Hermetic Tests with Coverage
+        env:
+          JWT_SECRET: c8f9b2d3e4a5f601728394a5b6c7d8e9f0123456789abcdef0123456789abcdef
+          SPRING_PROFILES_ACTIVE: test
+        run: mvn clean verify -B
+
+      - name: Archive JaCoCo Code Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jacoco-coverage-report
+          path: docs/jacoco/
+          retention-days: 14

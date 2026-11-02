@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.controller</a> &gt; <span class="el_source">BookController.java</span></div><h1>BookController.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.controller;
+
+import com.crunchycode.bookstore.dto.ApiErrorResponse;
+import com.crunchycode.bookstore.dto.BookCreateRequest;
+import com.crunchycode.bookstore.dto.BookResponse;
+import com.crunchycode.bookstore.dto.BookUpdateRequest;
+import com.crunchycode.bookstore.dto.PageResponse;
+import com.crunchycode.bookstore.service.BookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
+import java.util.Objects;
+
+@RestController
+@RequestMapping(&quot;/api/v1/books&quot;)
+@Tag(name = &quot;Books&quot;, description = &quot;Endpoints for querying and managing books and categories&quot;)
+public class BookController {
+
+    private final BookService bookService;
+
+<span class="fc" id="L36">    public BookController(BookService bookService) {</span>
+<span class="fc" id="L37">        this.bookService = Objects.requireNonNull(bookService);</span>
+<span class="fc" id="L38">    }</span>
+
+    // Public / Anyone can view books
+    @GetMapping
+    @Operation(summary = &quot;List books (paginated &amp; optimized)&quot;, description = &quot;Retrieves a paginated list of books with eager author &amp; category fetching (@EntityGraph) to prevent N+1 queries. Supports authorId filter. Public endpoint.&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Books list retrieved successfully&quot;,
+                    content = @Content(schema = @Schema(implementation = PageResponse.class)))
+    })
+    public ResponseEntity&lt;PageResponse&lt;BookResponse&gt;&gt; getAllBooks(
+            @Parameter(description = &quot;Optional filter by Author ID&quot;)
+            @RequestParam(required = false) Long authorId,
+            @Parameter(description = &quot;Pagination parameters (e.g. ?page=0&amp;size=20&amp;sort=title,asc)&quot;)
+            @PageableDefault(size = 20, sort = &quot;id&quot;, direction = Sort.Direction.ASC) Pageable pageable) {
+
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if (authorId != null) {</span>
+<span class="nc" id="L54">            return ResponseEntity.ok(bookService.getBooksByAuthor(authorId, pageable));</span>
+        }
+<span class="fc" id="L56">        return ResponseEntity.ok(bookService.getAllBooks(pageable));</span>
+    }
+
+    // Public / Anyone can view book by ID
+    @GetMapping(&quot;/{id}&quot;)
+    @Operation(summary = &quot;Get book by ID&quot;, description = &quot;Retrieves book details including author and categories. Public endpoint.&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Book found&quot;,
+                    content = @Content(schema = @Schema(implementation = BookResponse.class))),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Book not found&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity&lt;BookResponse&gt; getBookById(@PathVariable Long id) {
+<span class="nc" id="L69">        return ResponseEntity.ok(bookService.getBookById(id));</span>
+    }
+
+    // ROLE_USER or ROLE_ADMIN can create books
+    @PreAuthorize(&quot;hasAnyRole('USER', 'ADMIN')&quot;)
+    @PostMapping
+    @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    @Operation(summary = &quot;Create book (USER or ADMIN)&quot;, description = &quot;Creates a new book. Requires authenticated user with ROLE_USER or ROLE_ADMIN.&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;201&quot;, description = &quot;Book created successfully&quot;,
+                    content = @Content(schema = @Schema(implementation = BookResponse.class))),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Invalid request payload&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Authentication required&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Referenced author not found&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;409&quot;, description = &quot;ISBN already exists&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity&lt;BookResponse&gt; createBook(@Valid @RequestBody BookCreateRequest request) {
+<span class="fc" id="L90">        BookResponse created = bookService.createBook(request);</span>
+<span class="fc" id="L91">        URI location = ServletUriComponentsBuilder.fromCurrentRequest()</span>
+<span class="fc" id="L92">                .path(&quot;/{id}&quot;)</span>
+<span class="fc" id="L93">                .buildAndExpand(created.id())</span>
+<span class="fc" id="L94">                .toUri();</span>
+<span class="fc" id="L95">        return ResponseEntity.created(location).body(created);</span>
+    }
+
+    // ROLE_ADMIN only can update books
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @PutMapping(&quot;/{id}&quot;)
+    @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    @Operation(summary = &quot;Update book (ADMIN only)&quot;, description = &quot;Updates an existing book record. Requires ROLE_ADMIN authentication.&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;200&quot;, description = &quot;Book updated successfully&quot;,
+                    content = @Content(schema = @Schema(implementation = BookResponse.class))),
+            @ApiResponse(responseCode = &quot;400&quot;, description = &quot;Validation failure&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Authentication required&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied (Requires ROLE_ADMIN)&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Book not found&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity&lt;BookResponse&gt; updateBook(@PathVariable Long id,
+                                                   @Valid @RequestBody BookUpdateRequest request) {
+<span class="nc" id="L117">        return ResponseEntity.ok(bookService.updateBook(id, request));</span>
+    }
+
+    // ROLE_ADMIN only can delete books
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @DeleteMapping(&quot;/{id}&quot;)
+    @SecurityRequirement(name = &quot;bearerAuth&quot;)
+    @Operation(summary = &quot;Delete book (ADMIN only)&quot;, description = &quot;Deletes a book by ID. Requires ROLE_ADMIN authentication.&quot;)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = &quot;204&quot;, description = &quot;Book deleted successfully&quot;),
+            @ApiResponse(responseCode = &quot;401&quot;, description = &quot;Authentication required&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;403&quot;, description = &quot;Access denied (Requires ROLE_ADMIN)&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = &quot;404&quot;, description = &quot;Book not found&quot;,
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    public ResponseEntity&lt;Void&gt; deleteBook(@PathVariable Long id) {
+<span class="nc" id="L135">        bookService.deleteBook(id);</span>
+<span class="nc" id="L136">        return ResponseEntity.noContent().build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

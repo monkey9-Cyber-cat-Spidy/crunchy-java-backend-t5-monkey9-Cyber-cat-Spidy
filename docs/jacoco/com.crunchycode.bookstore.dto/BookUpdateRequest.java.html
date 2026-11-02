@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookUpdateRequest.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.dto</a> &gt; <span class="el_source">BookUpdateRequest.java</span></div><h1>BookUpdateRequest.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.dto;
+
+import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
+import java.util.Set;
+
+<span class="nc" id="L7">public record BookUpdateRequest(</span>
+        @NotBlank(message = &quot;Book title is required&quot;)
+        @Size(min = 1, max = 200, message = &quot;Title must be between 1 and 200 characters&quot;)
+        String title,
+
+        @NotBlank(message = &quot;ISBN is required&quot;)
+        @Pattern(regexp = &quot;^(97(8|9))?\\d{9}(\\d|X)$&quot;, message = &quot;Invalid ISBN format&quot;)
+        String isbn,
+
+        @NotNull(message = &quot;Price is required&quot;)
+        @DecimalMin(value = &quot;0.01&quot;, message = &quot;Price must be greater than zero&quot;)
+        @Digits(integer = 6, fraction = 2, message = &quot;Price format must have up to 6 digits and 2 decimals&quot;)
+        BigDecimal price,
+
+        @NotNull(message = &quot;Publication year is required&quot;)
+        @Min(value = 1450, message = &quot;Publication year must be 1450 or later&quot;)
+        @Max(value = 2026, message = &quot;Publication year cannot be in the future&quot;)
+        Integer publicationYear,
+
+        @NotNull(message = &quot;authorId is required&quot;)
+        @Positive(message = &quot;authorId must be a positive number&quot;)
+        Long authorId,
+
+        Set&lt;Long&gt; categoryIds
+) {}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

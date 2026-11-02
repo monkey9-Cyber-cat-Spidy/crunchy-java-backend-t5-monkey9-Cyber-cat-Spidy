@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BenchmarkService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.service</a> &gt; <span class="el_source">BenchmarkService.java</span></div><h1>BenchmarkService.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.service;
+
+import com.crunchycode.bookstore.dto.BenchmarkResponse;
+import com.crunchycode.bookstore.model.Author;
+import com.crunchycode.bookstore.model.Book;
+import com.crunchycode.bookstore.model.Category;
+import com.crunchycode.bookstore.repository.AuthorRepository;
+import com.crunchycode.bookstore.repository.BookRepository;
+import com.crunchycode.bookstore.repository.CategoryRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
+
+@Service
+public class BenchmarkService {
+
+<span class="fc" id="L25">    private static final Logger log = LoggerFactory.getLogger(BenchmarkService.class);</span>
+    private static final double TARGET_THRESHOLD_MS = 500.0;
+
+    private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
+    private final CategoryRepository categoryRepository;
+
+    public BenchmarkService(BookRepository bookRepository,
+                            AuthorRepository authorRepository,
+<span class="fc" id="L34">                            CategoryRepository categoryRepository) {</span>
+<span class="fc" id="L35">        this.bookRepository = Objects.requireNonNull(bookRepository);</span>
+<span class="fc" id="L36">        this.authorRepository = Objects.requireNonNull(authorRepository);</span>
+<span class="fc" id="L37">        this.categoryRepository = Objects.requireNonNull(categoryRepository);</span>
+<span class="fc" id="L38">    }</span>
+
+    @Transactional
+    public long seedDataIfNecessary(int targetCount) {
+<span class="fc" id="L42">        long currentCount = bookRepository.count();</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (currentCount &gt;= targetCount) {</span>
+<span class="fc" id="L44">            log.info(&quot;Database already contains {} books (target: {}). Skipping seed.&quot;, currentCount, targetCount);</span>
+<span class="fc" id="L45">            return currentCount;</span>
+        }
+
+<span class="fc" id="L48">        log.info(&quot;Seeding database to {} records (current: {})...&quot;, targetCount, currentCount);</span>
+
+        // Ensure categories exist
+<span class="fc" id="L51">        List&lt;Category&gt; categories = categoryRepository.findAll();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (categories.isEmpty()) {</span>
+<span class="fc" id="L53">            categories = categoryRepository.saveAll(List.of(</span>
+                    new Category(null, &quot;Technology&quot;, &quot;Software and Computer Systems&quot;),
+                    new Category(null, &quot;Science&quot;, &quot;Natural and Physical Sciences&quot;),
+                    new Category(null, &quot;Fiction&quot;, &quot;Literary and Speculative Works&quot;),
+                    new Category(null, &quot;History&quot;, &quot;Historical Studies and Biographies&quot;),
+                    new Category(null, &quot;Philosophy&quot;, &quot;Epistemology and Ethics&quot;)
+            ));
+        }
+
+        // Ensure at least 25 authors exist
+<span class="fc" id="L63">        List&lt;Author&gt; authors = authorRepository.findAll();</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        if (authors.size() &lt; 25) {</span>
+<span class="fc" id="L65">            List&lt;Author&gt; newAuthors = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">            for (int i = authors.size() + 1; i &lt;= 25; i++) {</span>
+<span class="fc" id="L67">                newAuthors.add(new Author(null, &quot;Benchmark Author &quot; + i, &quot;author&quot; + i + &quot;@crunchybenchmark.internal&quot;, &quot;Bio for author &quot; + i));</span>
+            }
+<span class="fc" id="L69">            authors = new ArrayList&lt;&gt;(authors);</span>
+<span class="fc" id="L70">            authors.addAll(authorRepository.saveAll(newAuthors));</span>
+        }
+
+        // Generate books in batches of 200
+<span class="fc" id="L74">        long remaining = targetCount - currentCount;</span>
+<span class="fc" id="L75">        List&lt;Book&gt; batch = new ArrayList&lt;&gt;(200);</span>
+<span class="fc" id="L76">        Random random = new Random(42); // deterministic seed for reproducibility</span>
+
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        for (int i = 1; i &lt;= remaining; i++) {</span>
+<span class="fc" id="L79">            long sequence = currentCount + i;</span>
+<span class="fc" id="L80">            Author author = authors.get(random.nextInt(authors.size()));</span>
+<span class="fc" id="L81">            Category cat = categories.get(random.nextInt(categories.size()));</span>
+
+<span class="fc" id="L83">            String isbn = String.format(&quot;978-%010d&quot;, sequence);</span>
+<span class="fc" id="L84">            BigDecimal price = BigDecimal.valueOf(10.0 + (random.nextDouble() * 90.0)).setScale(2, RoundingMode.HALF_UP);</span>
+<span class="fc" id="L85">            int pubYear = 1990 + random.nextInt(35);</span>
+
+<span class="fc" id="L87">            Book book = new Book(</span>
+                    null,
+                    &quot;Benchmark Performance Book Vol. &quot; + sequence,
+                    isbn,
+                    price,
+<span class="fc" id="L92">                    pubYear,</span>
+                    author
+            );
+<span class="fc" id="L95">            book.addCategory(cat);</span>
+<span class="fc" id="L96">            batch.add(book);</span>
+
+<span class="fc bfc" id="L98" title="All 4 branches covered.">            if (batch.size() &gt;= 200 || i == remaining) {</span>
+<span class="fc" id="L99">                bookRepository.saveAll(batch);</span>
+<span class="fc" id="L100">                batch.clear();</span>
+            }
+        }
+
+<span class="fc" id="L104">        long finalCount = bookRepository.count();</span>
+<span class="fc" id="L105">        log.info(&quot;Seeding completed successfully. Total book records now: {}&quot;, finalCount);</span>
+<span class="fc" id="L106">        return finalCount;</span>
+    }
+
+    @Transactional(readOnly = true)
+    public BenchmarkResponse runBenchmark(int iterations, int pageSize) {
+<span class="fc" id="L111">        long totalRecords = bookRepository.count();</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        if (totalRecords &lt; 1000) {</span>
+<span class="fc" id="L113">            totalRecords = seedDataIfNecessary(1000);</span>
+        }
+
+<span class="fc" id="L116">        int maxPage = (int) Math.max(0, (totalRecords / pageSize) - 1);</span>
+<span class="fc" id="L117">        Random random = new Random();</span>
+
+        // Warm up JVM and Hibernate query plan cache (5 executions)
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        for (int w = 0; w &lt; 5; w++) {</span>
+<span class="fc" id="L121">            Pageable warmupPage = PageRequest.of(w % (maxPage + 1), pageSize, Sort.by(Sort.Direction.ASC, &quot;title&quot;));</span>
+<span class="fc" id="L122">            bookRepository.findAllWithAssociations(warmupPage);</span>
+        }
+
+<span class="fc" id="L125">        List&lt;Double&gt; latencies = new ArrayList&lt;&gt;(iterations);</span>
+
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        for (int i = 0; i &lt; iterations; i++) {</span>
+<span class="fc" id="L128">            int pageIndex = random.nextInt(maxPage + 1);</span>
+<span class="fc bfc" id="L129" title="All 4 branches covered.">            String sortProperty = (i % 3 == 0) ? &quot;title&quot; : (i % 3 == 1) ? &quot;publicationYear&quot; : &quot;price&quot;;</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">            Sort.Direction direction = (i % 2 == 0) ? Sort.Direction.ASC : Sort.Direction.DESC;</span>
+<span class="fc" id="L131">            Pageable pageable = PageRequest.of(pageIndex, pageSize, Sort.by(direction, sortProperty));</span>
+
+<span class="fc" id="L133">            long startTime = System.nanoTime();</span>
+<span class="fc" id="L134">            bookRepository.findAllWithAssociations(pageable);</span>
+<span class="fc" id="L135">            long elapsedNanos = System.nanoTime() - startTime;</span>
+
+<span class="fc" id="L137">            double latencyMs = elapsedNanos / 1_000_000.0;</span>
+<span class="fc" id="L138">            latencies.add(latencyMs);</span>
+        }
+
+<span class="fc" id="L141">        Collections.sort(latencies);</span>
+
+<span class="fc" id="L143">        double sum = 0;</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">        for (double lat : latencies) {</span>
+<span class="fc" id="L145">            sum += lat;</span>
+<span class="fc" id="L146">        }</span>
+<span class="fc" id="L147">        double mean = round(sum / latencies.size());</span>
+<span class="fc" id="L148">        double min = round(latencies.get(0));</span>
+<span class="fc" id="L149">        double max = round(latencies.get(latencies.size() - 1));</span>
+<span class="fc" id="L150">        double p50 = round(percentile(latencies, 50));</span>
+<span class="fc" id="L151">        double p95 = round(percentile(latencies, 95));</span>
+<span class="fc" id="L152">        double p99 = round(percentile(latencies, 99));</span>
+
+<span class="pc bpc" id="L154" title="2 of 4 branches missed.">        boolean meetsRequirement = p95 &lt;= TARGET_THRESHOLD_MS &amp;&amp; mean &lt;= TARGET_THRESHOLD_MS;</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        String summary = meetsRequirement</span>
+<span class="fc" id="L156">                ? String.format(&quot;PASS: At %d records, mean latency is %.2f ms and p95 is %.2f ms, strictly beating the 500 ms threshold.&quot;,</span>
+<span class="fc" id="L157">                totalRecords, mean, p95)</span>
+<span class="pc" id="L158">                : String.format(&quot;FAIL: Response latency exceeded the 500 ms threshold (p95: %.2f ms).&quot;, p95);</span>
+
+<span class="fc" id="L160">        return new BenchmarkResponse(</span>
+                totalRecords,
+                iterations,
+                pageSize,
+                true,
+                TARGET_THRESHOLD_MS,
+                mean,
+                p50,
+                p95,
+                p99,
+                min,
+                max,
+                meetsRequirement,
+                summary
+        );
+    }
+
+    private double percentile(List&lt;Double&gt; sortedList, double percentile) {
+<span class="fc" id="L178">        int index = (int) Math.ceil((percentile / 100.0) * sortedList.size()) - 1;</span>
+<span class="fc" id="L179">        index = Math.max(0, Math.min(index, sortedList.size() - 1));</span>
+<span class="fc" id="L180">        return sortedList.get(index);</span>
+    }
+
+    private double round(double value) {
+<span class="fc" id="L184">        return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).doubleValue();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

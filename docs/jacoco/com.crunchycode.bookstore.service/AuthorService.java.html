@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthorService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">crunchy-java-backend-t5-monkey9-Cyber-cat-Spidy</a> &gt; <a href="index.source.html" class="el_package">com.crunchycode.bookstore.service</a> &gt; <span class="el_source">AuthorService.java</span></div><h1>AuthorService.java</h1><pre class="source lang-java linenums">package com.crunchycode.bookstore.service;
+
+import com.crunchycode.bookstore.dto.AuthorCreateRequest;
+import com.crunchycode.bookstore.dto.AuthorResponse;
+import com.crunchycode.bookstore.dto.AuthorUpdateRequest;
+import com.crunchycode.bookstore.dto.PageResponse;
+import com.crunchycode.bookstore.exception.BusinessRuleException;
+import com.crunchycode.bookstore.exception.DuplicateResourceException;
+import com.crunchycode.bookstore.exception.ResourceNotFoundException;
+import com.crunchycode.bookstore.model.Author;
+import com.crunchycode.bookstore.repository.AuthorRepository;
+import com.crunchycode.bookstore.repository.BookRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+@Service
+public class AuthorService {
+
+    private final AuthorRepository authorRepository;
+    private final BookRepository bookRepository;
+
+<span class="fc" id="L28">    public AuthorService(AuthorRepository authorRepository, BookRepository bookRepository) {</span>
+<span class="fc" id="L29">        this.authorRepository = Objects.requireNonNull(authorRepository);</span>
+<span class="fc" id="L30">        this.bookRepository = Objects.requireNonNull(bookRepository);</span>
+<span class="fc" id="L31">    }</span>
+
+    @Transactional(readOnly = true)
+    public PageResponse&lt;AuthorResponse&gt; getAllAuthors(Pageable pageable) {
+<span class="fc" id="L35">        Page&lt;Author&gt; page = authorRepository.findAll(pageable);</span>
+<span class="fc" id="L36">        List&lt;AuthorResponse&gt; dtos = page.getContent().stream()</span>
+<span class="fc" id="L37">                .map(this::mapToResponse)</span>
+<span class="fc" id="L38">                .collect(Collectors.toList());</span>
+
+<span class="fc" id="L40">        return new PageResponse&lt;&gt;(</span>
+                dtos,
+<span class="fc" id="L42">                page.getNumber(),</span>
+<span class="fc" id="L43">                page.getSize(),</span>
+<span class="fc" id="L44">                page.getTotalElements(),</span>
+<span class="fc" id="L45">                page.getTotalPages(),</span>
+<span class="fc" id="L46">                page.isLast()</span>
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public AuthorResponse getAuthorById(Long id) {
+<span class="fc" id="L52">        Author author = authorRepository.findById(id)</span>
+<span class="fc" id="L53">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Author not found with id: &quot; + id));</span>
+<span class="fc" id="L54">        return mapToResponse(author);</span>
+    }
+
+    @Transactional
+    public AuthorResponse createAuthor(AuthorCreateRequest request) {
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (authorRepository.existsByEmail(request.email())) {</span>
+<span class="fc" id="L60">            throw new DuplicateResourceException(&quot;Author already exists with email: &quot; + request.email());</span>
+        }
+
+<span class="fc" id="L63">        Author author = new Author();</span>
+<span class="fc" id="L64">        author.setName(request.name().trim());</span>
+<span class="fc" id="L65">        author.setEmail(request.email().trim().toLowerCase());</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        author.setBio(request.bio() != null ? request.bio().trim() : null);</span>
+
+<span class="fc" id="L68">        Author saved = authorRepository.save(author);</span>
+<span class="fc" id="L69">        return mapToResponse(saved);</span>
+    }
+
+    @Transactional
+    public AuthorResponse updateAuthor(Long id, AuthorUpdateRequest request) {
+<span class="fc" id="L74">        Author existing = authorRepository.findById(id)</span>
+<span class="pc" id="L75">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Author not found with id: &quot; + id));</span>
+
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (!existing.getEmail().equalsIgnoreCase(request.email())</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">                &amp;&amp; authorRepository.existsByEmail(request.email())) {</span>
+<span class="nc" id="L79">            throw new DuplicateResourceException(&quot;Author already exists with email: &quot; + request.email());</span>
+        }
+
+<span class="fc" id="L82">        existing.setName(request.name().trim());</span>
+<span class="fc" id="L83">        existing.setEmail(request.email().trim().toLowerCase());</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        existing.setBio(request.bio() != null ? request.bio().trim() : null);</span>
+
+<span class="fc" id="L86">        Author saved = authorRepository.save(existing);</span>
+<span class="fc" id="L87">        return mapToResponse(saved);</span>
+    }
+
+    @Transactional
+    public void deleteAuthor(Long id) {
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (!authorRepository.existsById(id)) {</span>
+<span class="nc" id="L93">            throw new ResourceNotFoundException(&quot;Author not found with id: &quot; + id);</span>
+        }
+
+<span class="fc" id="L96">        int bookCount = bookRepository.countByAuthorId(id);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (bookCount &gt; 0) {</span>
+<span class="fc" id="L98">            throw new BusinessRuleException(&quot;Cannot delete author with id &quot; + id + &quot; because they still have &quot; + bookCount + &quot; registered book(s)&quot;);</span>
+        }
+
+<span class="fc" id="L101">        authorRepository.deleteById(id);</span>
+<span class="fc" id="L102">    }</span>
+
+    private AuthorResponse mapToResponse(Author author) {
+<span class="fc" id="L105">        int count = bookRepository.countByAuthorId(author.getId());</span>
+<span class="fc" id="L106">        return new AuthorResponse(</span>
+<span class="fc" id="L107">                author.getId(),</span>
+<span class="fc" id="L108">                author.getName(),</span>
+<span class="fc" id="L109">                author.getEmail(),</span>
+<span class="fc" id="L110">                author.getBio(),</span>
+                count
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

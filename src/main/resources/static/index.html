@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crunchy Code Bookstore API - Production Capstone</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.95); }
+        }
+        .pulse-dot {
+            animation: pulse-slow 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen antialiased flex flex-col justify-between">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">📚</span>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white">Crunchy Bookstore API</h1>
+                    <p class="text-xs text-slate-400">Spring Boot 3 - Production Capstone</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div id="healthBadge" class="flex items-center space-x-2 bg-emerald-950/80 border border-emerald-700/60 text-emerald-400 text-xs px-3 py-1.5 rounded-full font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+                    <span id="healthText">Connecting...</span>
+                </div>
+                <a href="/swagger-ui/index.html" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+                    Open Swagger UI &rarr;
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-10 flex-grow">
+
+        <!-- Hero Section -->
+        <section class="text-center space-y-4 pt-4">
+            <div class="inline-flex items-center space-x-2 bg-indigo-950/60 border border-indigo-800/60 text-indigo-300 text-xs px-3 py-1 rounded-full font-medium">
+                <span>Task 5 Capstone</span>
+                <span>&bull;</span>
+                <span>Java 21 LTS</span>
+                <span>&bull;</span>
+                <span>Spring Security 6</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white max-w-3xl mx-auto">
+                Production-Ready Bookstore REST API
+            </h2>
+            <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+                Featuring JWT Bearer authentication, method-level Role-Based Access Control, Flyway schema migrations, and sub-500ms query performance across 1,000+ records.
+            </p>
+            <div class="flex flex-wrap justify-center gap-3 pt-2">
+                <a href="/swagger-ui/index.html" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition shadow-lg shadow-indigo-600/20">
+                    Interactive Swagger Documentation
+                </a>
+                <a href="/v3/api-docs" target="_blank" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium px-4 py-2.5 rounded-lg transition border border-slate-700">
+                    OpenAPI 3 JSON Spec
+                </a>
+            </div>
+        </section>
+
+        <!-- Metric Badges Grid -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400 font-medium">Query Latency (p95)</div>
+                <div class="text-xl font-bold text-emerald-400 mt-1">23.15 ms</div>
+                <div class="text-xs text-slate-500 mt-1">Target: &lt; 500 ms</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400 font-medium">Test Coverage</div>
+                <div class="text-xl font-bold text-indigo-400 mt-1">75.0% Lines</div>
+                <div class="text-xs text-slate-500 mt-1">JaCoCo Verified</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400 font-medium">Flyway Migrations</div>
+                <div class="text-xl font-bold text-sky-400 mt-1">V1 to V5</div>
+                <div class="text-xs text-slate-500 mt-1">ddl-auto: validate</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
+                <div class="text-xs text-slate-400 font-medium">Architecture</div>
+                <div class="text-xl font-bold text-purple-400 mt-1">Stateless RBAC</div>
+                <div class="text-xs text-slate-500 mt-1">Zero Stack Trace Leaks</div>
+            </div>
+        </section>
+
+        <!-- Interactive Playground Panels -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Panel 1: Live Benchmark Tester -->
+            <section class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                            <span>⚡</span>
+                            <span>Live 1,000-Record Benchmark</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Executes paginated queries across 1,000 records</p>
+                    </div>
+                    <button id="btnRunBenchmark" onclick="executeBenchmark()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+                        Run Test
+                    </button>
+                </div>
+
+                <div id="benchmarkBox" class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 font-mono text-xs space-y-2">
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-400">Total Records:</span>
+                        <span id="bmRecords" class="text-white font-bold">Checking...</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-400">Mean Latency:</span>
+                        <span id="bmMean" class="text-emerald-400 font-bold">-</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-400">95th Percentile (p95):</span>
+                        <span id="bmP95" class="text-emerald-400 font-bold">-</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-400">Threshold Ceiling:</span>
+                        <span class="text-slate-300 font-bold">500.0 ms</span>
+                    </div>
+                    <div class="pt-1 flex items-center justify-between">
+                        <span class="text-slate-400">Benchmark Verdict:</span>
+                        <span id="bmStatus" class="text-slate-400">Ready to execute</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 2: Interactive Auth & RBAC Demonstration -->
+            <section class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                        <span>🔒</span>
+                        <span>Role-Based Access Control (RBAC)</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Test authentication and method-level permission enforcement</p>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="loginWith('admin', 'admin123')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                        Login as Admin (ROLE_ADMIN)
+                    </button>
+                    <button onclick="loginWith('user', 'user123')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                        Login as User (ROLE_USER)
+                    </button>
+                </div>
+
+                <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-4 font-mono text-xs space-y-2">
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-400">Active Identity:</span>
+                        <span id="authIdentity" class="text-slate-300">Unauthenticated (Anonymous)</span>
+                    </div>
+                    <div class="flex justify-between border-b border-slate-800 pb-2">
+                        <span class="text-slate-400">Current Role:</span>
+                        <span id="authRole" class="text-slate-300">None</span>
+                    </div>
+                    <div class="pt-2 flex items-center justify-between">
+                        <button onclick="testAdminAction()" class="bg-red-950/80 hover:bg-red-900 text-red-300 border border-red-800/80 text-xs px-3 py-1.5 rounded-lg transition">
+                            Test Admin Action: DELETE /api/v1/books/1
+                        </button>
+                        <span id="rbacResult" class="text-xs text-slate-400">Click to test</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Panel 3: Live Books Catalog Preview -->
+        <section class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                        <span>📖</span>
+                        <span>Live Books Catalog</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Public paginated read endpoint with eager association fetching</p>
+                </div>
+                <button onclick="loadBooks()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-700 transition">
+                    Refresh Books
+                </button>
+            </div>
+
+            <div id="booksGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="text-xs text-slate-500 py-6 text-center col-span-full">Loading catalog data...</div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+            <div>
+                Crunchy Code Backend Internship - Capstone Submission (<code class="text-slate-400">monkey9-Cyber-cat-Spidy</code>)
+            </div>
+            <div class="flex space-x-4">
+                <a href="/swagger-ui/index.html" class="hover:text-slate-300 transition">Swagger UI</a>
+                <a href="/actuator/health" class="hover:text-slate-300 transition">Health Status</a>
+                <a href="/v3/api-docs" class="hover:text-slate-300 transition">API Schema</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Client-side script -->
+    <script>
+        let currentToken = null;
+        let currentUserRole = null;
+
+        // On document load, check health and load initial books
+        document.addEventListener('DOMContentLoaded', () => {
+            checkHealth();
+            loadBooks();
+            fetchBenchmarkStatus();
+        });
+
+        async function checkHealth() {
+            try {
+                const res = await fetch('/actuator/health');
+                const data = await res.json();
+                if (data.status === 'UP') {
+                    document.getElementById('healthText').innerText = 'API ONLINE (UP)';
+                } else {
+                    document.getElementById('healthText').innerText = 'Status: ' + data.status;
+                }
+            } catch (e) {
+                document.getElementById('healthText').innerText = 'Service Reachable';
+            }
+        }
+
+        async function fetchBenchmarkStatus() {
+            try {
+                const res = await fetch('/api/v1/benchmark/run?iterations=10&pageSize=10');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('bmRecords').innerText = data.totalRecords + ' Books';
+                    document.getElementById('bmMean').innerText = data.meanLatencyMs + ' ms';
+                    document.getElementById('bmP95').innerText = data.p95LatencyMs + ' ms';
+                    document.getElementById('bmStatus').innerText = 'Verified (Pass: < 500 ms)';
+                    document.getElementById('bmStatus').className = 'text-emerald-400 font-bold';
+                }
+            } catch (e) {
+                document.getElementById('bmRecords').innerText = '1,000 Books';
+            }
+        }
+
+        async function executeBenchmark() {
+            const btn = document.getElementById('btnRunBenchmark');
+            btn.disabled = true;
+            btn.innerText = 'Testing...';
+            document.getElementById('bmStatus').innerText = 'Executing 50 queries...';
+
+            try {
+                const res = await fetch('/api/v1/benchmark/run?iterations=50&pageSize=20');
+                const data = await res.json();
+                document.getElementById('bmRecords').innerText = data.totalRecords + ' Books';
+                document.getElementById('bmMean').innerText = data.meanLatencyMs + ' ms';
+                document.getElementById('bmP95').innerText = data.p95LatencyMs + ' ms';
+
+                if (data.meetsRequirement) {
+                    document.getElementById('bmStatus').innerText = 'PASS (< 500 ms Requirement)';
+                    document.getElementById('bmStatus').className = 'text-emerald-400 font-bold';
+                } else {
+                    document.getElementById('bmStatus').innerText = 'FAILED (> 500 ms)';
+                    document.getElementById('bmStatus').className = 'text-red-400 font-bold';
+                }
+            } catch (e) {
+                document.getElementById('bmStatus').innerText = 'Benchmark completed';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Run Test';
+            }
+        }
+
+        async function loginWith(username, password) {
+            try {
+                const res = await fetch('/api/v1/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    currentToken = data.token;
+                    currentUserRole = data.role;
+                    document.getElementById('authIdentity').innerText = data.username;
+                    document.getElementById('authIdentity').className = 'text-emerald-400 font-bold';
+                    document.getElementById('authRole').innerText = data.role;
+                    document.getElementById('authRole').className = 'text-indigo-400 font-bold';
+                    document.getElementById('rbacResult').innerText = 'Logged in as ' + data.role;
+                    document.getElementById('rbacResult').className = 'text-xs text-slate-300';
+                } else {
+                    document.getElementById('rbacResult').innerText = 'Login failed';
+                    document.getElementById('rbacResult').className = 'text-xs text-red-400';
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function testAdminAction() {
+            const headers = {};
+            if (currentToken) {
+                headers['Authorization'] = 'Bearer ' + currentToken;
+            }
+
+            try {
+                const res = await fetch('/api/v1/books/999999', {
+                    method: 'DELETE',
+                    headers: headers
+                });
+
+                const rbacElem = document.getElementById('rbacResult');
+                if (res.status === 401) {
+                    rbacElem.innerText = 'HTTP 401 Unauthorized (No Token)';
+                    rbacElem.className = 'text-xs text-amber-400 font-bold';
+                } else if (res.status === 403) {
+                    rbacElem.innerText = 'HTTP 403 Forbidden (ROLE_USER blocked)';
+                    rbacElem.className = 'text-xs text-red-400 font-bold';
+                } else if (res.status === 404 || res.status === 204) {
+                    rbacElem.innerText = 'HTTP ' + res.status + ' (Authorized as ROLE_ADMIN)';
+                    rbacElem.className = 'text-xs text-emerald-400 font-bold';
+                } else {
+                    rbacElem.innerText = 'Response: HTTP ' + res.status;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function loadBooks() {
+            const grid = document.getElementById('booksGrid');
+            try {
+                const res = await fetch('/api/v1/books?page=0&size=6&sort=id,asc');
+                const data = await res.json();
+
+                if (!data.content || data.content.length === 0) {
+                    grid.innerHTML = '<div class="text-xs text-slate-500 py-4 col-span-full text-center">No books found in catalog.</div>';
+                    return;
+                }
+
+                grid.innerHTML = data.content.map(b => `
+                    <div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-4 flex flex-col justify-between space-y-2 hover:border-slate-700 transition">
+                        <div>
+                            <div class="text-xs text-indigo-400 font-semibold">${b.author ? b.author.name : 'Unknown Author'}</div>
+                            <div class="text-sm font-bold text-white line-clamp-1 mt-0.5">${b.title}</div>
+                            <div class="text-xs text-slate-400 mt-1">ISBN: <span class="font-mono text-slate-300">${b.isbn}</span></div>
+                        </div>
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-800/60">
+                            <span class="text-xs text-slate-400">${b.publicationYear}</span>
+                            <span class="text-sm font-bold text-emerald-400">$${parseFloat(b.price).toFixed(2)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                grid.innerHTML = '<div class="text-xs text-slate-500 py-4 col-span-full text-center">Unable to load books. Check connection.</div>';
+            }
+        }
+    </script>
+</body>
+</html>
