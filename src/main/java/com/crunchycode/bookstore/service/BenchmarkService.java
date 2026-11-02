@@ -106,7 +106,7 @@ public class BenchmarkService {
         return finalCount;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public BenchmarkResponse runBenchmark(int iterations, int pageSize) {
         long totalRecords = bookRepository.count();
         if (totalRecords < 1000) {
