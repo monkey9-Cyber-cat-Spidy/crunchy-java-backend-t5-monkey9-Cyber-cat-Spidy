@@ -15,10 +15,10 @@ Production-grade, cloud-deployed REST API for a digital bookstore platform built
 
 | Resource | Target URL |
 | :--- | :--- |
-| **Web Portal Dashboard** | `https://crunchy-bookstore-api-production.up.railway.app/` *(or your deployed domain)* |
-| **Interactive Swagger UI** | `https://crunchy-bookstore-api-production.up.railway.app/swagger-ui/index.html` |
-| **OpenAPI 3 JSON Spec** | `https://crunchy-bookstore-api-production.up.railway.app/v3/api-docs` |
-| **Cloud Health Check** | `https://crunchy-bookstore-api-production.up.railway.app/actuator/health` |
+| **Web Portal Dashboard** | [https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/](https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/) |
+| **Interactive Swagger UI** | [https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/swagger-ui/index.html](https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/swagger-ui/index.html) |
+| **OpenAPI 3 JSON Spec** | [https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/v3/api-docs](https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/v3/api-docs) |
+| **Cloud Health Check** | [https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/actuator/health](https://crunchy-java-backend-t5-monkey9-cyber.onrender.com/actuator/health) |
 | **3-Minute Video Demo** | [Live Video Recording Link](https://www.youtube.com/watch?v=placeholder) |
 
 ---
