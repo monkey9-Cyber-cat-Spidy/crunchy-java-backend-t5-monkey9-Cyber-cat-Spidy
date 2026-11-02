@@ -106,7 +106,7 @@ public class BenchmarkService {
 <span class="fc" id="L106">        return finalCount;</span>
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public BenchmarkResponse runBenchmark(int iterations, int pageSize) {
 <span class="fc" id="L111">        long totalRecords = bookRepository.count();</span>
 <span class="fc bfc" id="L112" title="All 2 branches covered.">        if (totalRecords &lt; 1000) {</span>
